@@ -2,7 +2,7 @@ from multiprocessing import Process, Queue, cpu_count, current_process
 from pathlib import Path
 from collections import defaultdict
 import sys
-import time
+import timeit
 
 
 def search_words_in_file(filepath, keywords):
@@ -40,11 +40,7 @@ def worker(files, keywords, queue):
     print(f"Process {current_process().name} finished")
 
 
-if __name__ == "__main__":
-    file_paths = [Path(f"data/file_{i}.txt") for i in range(1, 51)]
-    keywords = ["Python", "project", "data", "analysis", "research"]
-
-    num_processes = cpu_count()
+def main_multiprocessing(file_paths, keywords, num_processes):
     processes = []
     results = defaultdict(list)
     results_queue = Queue()
@@ -53,8 +49,6 @@ if __name__ == "__main__":
     files_per_process = len(file_paths) // num_processes
     reminder = len(file_paths) % num_processes
     start_index = 0
-
-    start_time = time.time()
 
     for i in range(num_processes):
         end_index = start_index + files_per_process + (1 if i < reminder else 0)
@@ -80,7 +74,17 @@ if __name__ == "__main__":
     for p in processes:
         p.join()
 
-    end_time = time.time()
+    return results
+
+
+if __name__ == "__main__":
+    file_paths = [Path(f"data/file_{i}.txt") for i in range(1, 51)]
+    keywords = ["Python", "project", "data", "analysis", "research"]
+    num_processes = cpu_count()
+
+    start_time = timeit.default_timer()
+    results = main_multiprocessing(file_paths, keywords, num_processes)
+    end_time = timeit.default_timer()
     duration = end_time - start_time
     print(f"\nMultiprocessing version took {duration:.2f} seconds\n")
 

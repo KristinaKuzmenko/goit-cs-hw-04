@@ -2,7 +2,7 @@ from pathlib import Path
 from threading import Thread, Lock, current_thread
 from collections import defaultdict
 import logging
-import time
+import timeit
 
 
 def search_words_in_file(filepath, keywords):
@@ -34,14 +34,7 @@ def worker(files, keywords, results, lock):
     logging.info(f"Thread {current_thread().name} finished")
 
 
-if __name__ == "__main__":
-    message_format = "%(threadName)s %(asctime)s: %(message)s"
-    logging.basicConfig(format=message_format, level=logging.INFO, datefmt="%H:%M:%S")
-
-    file_paths = [Path(f"data/file_{i}.txt") for i in range(1, 51)]
-    keywords = ["Python", "project", "data", "analysis", "research"]
-
-    num_threads = 15
+def main_threading(file_paths, keywords, num_threads):
     threads = []
     results = defaultdict(list)
 
@@ -49,7 +42,6 @@ if __name__ == "__main__":
     files_per_thread = len(file_paths) // num_threads
     reminder = len(file_paths) % num_threads
     start_index = 0
-    start_time = time.time()
 
     for i in range(num_threads):
         end_index = start_index + files_per_thread + (1 if i < reminder else 0)
@@ -65,8 +57,20 @@ if __name__ == "__main__":
     for t in threads:
         t.join()
 
-    end_time = time.time()
-    duration = end_time - start_time
+    return results
+
+
+if __name__ == "__main__":
+    message_format = "%(threadName)s %(asctime)s: %(message)s"
+    logging.basicConfig(format=message_format, level=logging.INFO, datefmt="%H:%M:%S")
+    file_paths = [Path(f"data/file_{i}.txt") for i in range(1, 51)]
+    keywords = ["Python", "project", "data", "analysis", "research"]
+    num_threads = 15
+
+    start_time = timeit.default_timer()
+    results = main_threading(file_paths, keywords, num_threads)
+    duration = timeit.default_timer() - start_time
+
     print(f"\nThreaded version took {duration:.2f} seconds\n")
 
     for key, value in results.items():
